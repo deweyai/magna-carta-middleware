@@ -201,7 +201,7 @@ app.post('/generate-document', async (req, res) => {
         res.json({
             success: true,
             message: 'Document generated successfully',
-            downloadUrl: `${req.protocol}://${req.get('host')}/download/${requestId}/${fileId}`,
+            downloadUrl: `https://${req.get('host')}/download/${requestId}/${fileId}`,
             requestId: requestId,
             fileId: fileId,
             personalizedFor: contact.fullName,
