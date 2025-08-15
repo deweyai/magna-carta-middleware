@@ -197,11 +197,11 @@ app.post('/generate-document', async (req, res) => {
         const downloadUrl = createDownloadUrl(fileId, requestId);
         console.log(`Download URL: ${downloadUrl}`);
         
-        // Return success response
+        // Return success response with OUR download URL (not NDAQ's)
         res.json({
             success: true,
             message: 'Document generated successfully',
-            downloadUrl: downloadUrl,
+            downloadUrl: `${req.protocol}://${req.get('host')}/download/${requestId}/${fileId}`,
             requestId: requestId,
             fileId: fileId,
             personalizedFor: contact.fullName,
@@ -215,6 +215,40 @@ app.post('/generate-document', async (req, res) => {
             success: false,
             message: error.message || 'Internal server error',
             error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+    }
+});
+
+// Download proxy endpoint - handles authentication for us
+app.get('/download/:requestId/:fileId', async (req, res) => {
+    try {
+        const { requestId, fileId } = req.params;
+        
+        console.log(`Proxying download for request ${requestId}, file ${fileId}`);
+        
+        const downloadUrl = createDownloadUrl(fileId, requestId);
+        
+        // Download from NDAQ with authentication
+        const response = await axios.get(downloadUrl, {
+            headers: {
+                'Authorization': createBasicAuth(NDAQ_CONFIG.username, NDAQ_CONFIG.password)
+            },
+            responseType: 'stream',
+            timeout: 30000
+        });
+        
+        // Set appropriate headers for file download
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        res.setHeader('Content-Disposition', `attachment; filename="Personalized_Document_${requestId}.docx"`);
+        
+        // Pipe the file directly to the response
+        response.data.pipe(res);
+        
+    } catch (error) {
+        console.error('Error proxying download:', error);
+        res.status(500).json({
+            error: 'Failed to download document',
+            message: error.message
         });
     }
 });
