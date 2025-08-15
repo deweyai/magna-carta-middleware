@@ -1,0 +1,11 @@
+{
+  "name": "magna-carta-middleware",
+  "description": "Middleware service for Salesforce to NDAQ API integration",
+  "repository": "https://github.com/your-org/magna-carta",
+  "keywords": ["salesforce", "ndaq", "document-generation"],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}
